@@ -8,8 +8,40 @@
     "start": "next start"
   },
   "dependencies": {
+    "@headlessui/react": "^1.2.0",
+    "@heroicons/react": "^1.0.1",
+    "@tailwindcss/aspect-ratio": "^0.2.1",
+    "@tailwindcss/forms": "^0.3.3",
+    "@tailwindcss/typography": "^0.4.1",
+    "axios": "^0.21.1",
+    "firebase": "^8.6.8",
+    "firebase-admin": "^9.9.0",
+    "got": "^11.8.2",
+    "metascraper": "^5.22.1",
+    "metascraper-author": "^5.22.1",
+    "metascraper-clearbit": "^5.22.1",
+    "metascraper-date": "^5.22.1",
+    "metascraper-description": "^5.22.1",
+    "metascraper-image": "^5.22.1",
+    "metascraper-logo": "^5.22.1",
+    "metascraper-publisher": "^5.22.1",
+    "metascraper-title": "^5.22.1",
+    "metascraper-url": "^5.22.1",
     "next": "10.2.3",
+    "next-firebase-auth": "^0.13.1",
+    "next-transpile-modules": "^7.3.0",
+    "nookies": "^2.5.2",
     "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react-dom": "17.0.2",
+    "react-hook-form": "^7.8.4",
+    "react-redux": "^7.2.4",
+    "redux": "^4.1.0",
+    "redux-devtools-extension": "^2.13.9",
+    "redux-thunk": "^2.3.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.2.6",
+    "postcss": "^8.3.2",
+    "tailwindcss": "^2.1.4"
   }
 }
