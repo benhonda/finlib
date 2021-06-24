@@ -8,7 +8,6 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ArrowLeftIcon, LinkIcon, PencilIcon, PhotographIcon, PlusIcon, QuestionMarkCircleIcon } from "@heroicons/react/solid";
 import { useForm } from "react-hook-form";
 import { XIcon } from "@heroicons/react/outline";
-import SimpleModal from "components/SimpleModal";
 import axios from "axios";
 import firebase from "firebase";
 import "firebase/firestore";

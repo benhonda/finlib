@@ -1,40 +1,33 @@
-import { h1, h3, h4, p1, p2 } from "constants/styles";
+import { h1, h3, h4, h5, p1, p2 } from "constants/styles";
 import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import NewResourceSlideover from "components/newResourceSlideover/newResourceSlideover";
-import { useAuthUser, withAuthUser, withAuthUserTokenSSR } from "next-firebase-auth";
+import { getFirebaseAdmin, useAuthUser, withAuthUser, withAuthUserTokenSSR } from "next-firebase-auth";
 import { loadResources } from "redux/resources";
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/outline";
+import axios from "axios";
+import { WebResource, webResourceConverter } from "dbtypes/WebResource";
+import SimpleModal from "components/SimpleModal";
+import LoginBox from "components/auth/loginBox";
 
-function Home() {
+function Home({ resources = [] }) {
   const AuthUser = useAuthUser();
-  const router = useRouter();
-  const dispatch = useDispatch();
-  const resourcesFromRedux = useSelector((state) => state.resources);
 
-  console.log(AuthUser);
+  const [saveResourceIdForModal, setSaveResourceIdForModal] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  const dispatchLoadResources = useCallback(async () => {
-    try {
-      // TODO start loading here
-      const load = await loadResources();
-      if (load !== undefined) {
-        dispatch(load);
-        // TODO end loading here
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (!resourcesFromRedux || resourcesFromRedux?.length === 0) dispatchLoadResources();
-  }, [dispatchLoadResources, resourcesFromRedux]);
+  const saveResource = useCallback(
+    (resourceDocId) => {
+      if (!AuthUser.id) return setIsLoginModalOpen(true);
+      setSaveResourceIdForModal(resourceDocId);
+    },
+    [AuthUser, setSaveResourceIdForModal, setIsLoginModalOpen]
+  );
 
   return (
     <div className="bg-gray-100 min-h-screen">
@@ -43,6 +36,14 @@ function Home() {
         <meta name="description" content="A library of tools &amp; resources for trading &amp; investing, from websites to social media accounts to books and ebooks." />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+
+      <SimpleModal show={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} listOfModalSettersToClose={[setSaveResourceIdForModal]}>
+        <div className="px-12 pb-12 pt-16 flex items-center justify-center">
+          <div className="w-full max-w-xs">
+            <LoginBox />
+          </div>
+        </div>
+      </SimpleModal>
 
       <main className="min-h-screen">
         <NewResourceSlideover />
@@ -54,9 +55,28 @@ function Home() {
               <h3 className={`${p2({ isDisplay: true, isWeighted: false })} font-semibold text-gray-800`}>The Investors Library</h3>
             </div>
             <div>
-              <Link href={{ query: { new: "resource" } }}>
-                <a className={`${p2({})} transition-colors text-white bg-green-500 hover:bg-green-600 px-3 py-1.5 rounded-md`}>Add a resource +</a>
+              {/* <Link href={{ query: { new: "resource" } }}>
+                <a className={`${p2({})} transition-colors text-green-500 hover:text-green-600`}>Add a resource +</a>
+              </Link> */}
+
+              <Link href="/auth">
+                <a className={`${p2({})} transition-colors text-green-800 hover:text-gray-700 mx-4`}>Login</a>
               </Link>
+
+              <Link href="/auth">
+                <a className={`${p2({})} transition-colors text-white bg-green-500 hover:bg-green-600 px-3 py-1.5 rounded-md`}>Register</a>
+              </Link>
+
+              {AuthUser.id && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    AuthUser.signOut();
+                  }}
+                >
+                  Sign out
+                </button>
+              )}
             </div>
           </div>
         </nav>
@@ -101,11 +121,11 @@ function Home() {
               </div>
             </div>
 
-            <h1 className={`${h4({})} pt-10 text-gray-700`}>Most recent</h1>
+            <h1 className={`${h5({})} pt-10 text-gray-700`}>Most recent</h1>
 
             <div className="pt-2 grid grid-cols-1 gap-2">
-              {resourcesFromRedux?.map((resource) => (
-                <a href="#" key={resource.docId} className="transition-colors bg-white rounded shadow border border-gray-200 hover:bg-gray-50">
+              {resources.map((resource) => (
+                <div onClick={() => {}} key={resource.docId} className="transition-colors bg-white rounded shadow border border-gray-200 hover:bg-gray-50 cursor-pointer">
                   <div className="p-5 flex items-start h-32">
                     <a href="#" className="h-full aspect-h-1">
                       <img src={resource.logo} alt={resource.name} className="rounded h-full w-full object-contain" />
@@ -117,9 +137,9 @@ function Home() {
                       </div>
                       <div className="flex items-center divide-x divide-gray-300 py-0.5">
                         <p className="pr-3">
-                          <a href="#" className="text-xs text-gray-500 hover:underline">
+                          <button type="button" onClick={saveResource} className="text-xs text-gray-500 hover:underline">
                             Save
-                          </a>
+                          </button>
                         </p>
 
                         <p className="pl-3 text-xs text-gray-500 truncate">
@@ -159,7 +179,7 @@ function Home() {
                       </div>
                     </div>
                   </div>
-                </a>
+                </div>
               ))}
             </div>
           </div>
@@ -184,6 +204,29 @@ function Home() {
 // If you remove `getServerSideProps` from this page, it will be static
 // and load the authed user only on the client side.
 
-export const getServerSideProps = withAuthUserTokenSSR()();
+export const getServerSideProps = async () => {
+  // withAuthUserTokenSSR();
+  let resources = [];
+
+  try {
+    const db = getFirebaseAdmin().firestore();
+    const querySnapshot = await db.collection("resources").withConverter(webResourceConverter).get();
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      resources.push(new WebResource({ ...data, docId: doc.id }));
+    });
+  } catch (e) {
+    console.error(e);
+  }
+
+  let res = JSON.parse(JSON.stringify(resources));
+
+  return {
+    props: {
+      resources: res,
+    },
+  };
+};
 
 export default withAuthUser()(Home);

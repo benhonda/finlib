@@ -24,3 +24,29 @@ export const loadResources = async () => {
 
   return setResources(resources);
 };
+
+
+// IMPLEMENTATION, should you need it:
+// const router = useRouter();
+// const dispatch = useDispatch();
+// const resourcesFromRedux = useSelector((state) => state.resources);
+
+// console.log(AuthUser);
+// console.log(props);
+
+// const dispatchLoadResources = useCallback(async () => {
+//   try {
+//     // TODO start loading here
+//     const load = await loadResources();
+//     if (load !== undefined) {
+//       dispatch(load);
+//       // TODO end loading here
+//     }
+//   } catch (e) {
+//     console.error(e);
+//   }
+// }, [dispatch]);
+
+// useEffect(() => {
+//   if (!resourcesFromRedux || resourcesFromRedux?.length === 0) dispatchLoadResources();
+// }, [dispatchLoadResources, resourcesFromRedux]);
